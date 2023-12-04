@@ -56,7 +56,7 @@ $(document).ready(function () {
     }
   }
 
-  function faceMeshResults(results, isDraw = false) {
+  function faceMeshResults(results, isDraw = true) {
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     realLandmarks = []
     if (results.multiFaceLandmarks) {
@@ -244,7 +244,7 @@ $(document).ready(function () {
   // 人脸网格
   const faceMesh = new FaceMesh({
     locateFile: (file) => {
-      return `/resource/${file}`;
+      return `./resource/${file}`;
     }
   });
 
