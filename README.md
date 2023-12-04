@@ -1,2 +1,13 @@
 # 基于Google的MediaPipe的人脸活体检测
-纯前端实现的人脸活体检测，基于Google的MediaPipe，使用JavaScript实现，无需安装任何插件，直接在浏览器中运行（打开摄像头只能使用localhost或者使用https）。
+
+## 1. 介绍
+
+纯前端的人脸活体检测功能，基于Google的MediaPipe模型，可直接在浏览器中运行（打开摄像头功能如果不是https的情况下只能使用localhost）。
+
+## 2. TODO
+
+- [x] 前端视频实时处理逻辑
+- [x] 活体检测逻辑实现
+- [ ] 页面优化
+- [ ] 后端接口对接
+- [ ] 部署
