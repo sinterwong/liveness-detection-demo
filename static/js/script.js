@@ -68,7 +68,7 @@ $(document).ready(function () {
         point.x = 1 - point.x  // 水平翻转
         // realLandmarks.push([point.x * canvasElement.width, point.y * canvasElement.height])
         // 以100为基数而不论画布大小，阈值都不用改变
-        realLandmarks.push([point.x * 100, point.y * 100])
+        realLandmarks.push([point.x * 100, point.y * 100 * (canvasElement.height / canvasElement.width)])
       }
 
       if (isDraw) {
@@ -109,14 +109,14 @@ $(document).ready(function () {
       // 摇头
       let points = getPoint5(realLandmarks)
       let angle = getPoint5Angle(points)
-      if (angle[2] < -90 || angle[2] > 90) {
+      if ((angle[2] < -90 || angle[2] > 90) && (angle[1] > -30 && angle[1] < 30)) {
         flag = true
       }
     } else if (currentActionType == 3) {
       // 点头
       let points = getPoint5(realLandmarks)
       let angle = getPoint5Angle(points)
-      if (angle[1] < -30 || angle[1] > 30) {
+      if ((angle[1] < -30 || angle[1] > 30) && (angle[2] > -30 && angle[2] < 30)) {
         flag = true
       }
     }
