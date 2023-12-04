@@ -56,7 +56,7 @@ $(document).ready(function () {
     }
   }
 
-  function faceMeshResults(results) {
+  function faceMeshResults(results, isDraw = false) {
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     realLandmarks = []
     if (results.multiFaceLandmarks) {
@@ -66,19 +66,23 @@ $(document).ready(function () {
       }
       for (point of landmarks) {
         point.x = 1 - point.x  // 水平翻转
-        realLandmarks.push([point.x * canvasElement.width, point.y * canvasElement.height])
+        // realLandmarks.push([point.x * canvasElement.width, point.y * canvasElement.height])
+        // 以100为基数而不论画布大小，阈值都不用改变
+        realLandmarks.push([point.x * 100, point.y * 100])
       }
 
-      drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION,
-        { color: '#C0C0C070', lineWidth: 1 });
-      drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, { color: '#FF3030' });
-      drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, { color: '#FF3030' });
-      drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_IRIS, { color: '#FF3030' });
-      drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, { color: '#30FF30' });
-      drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYEBROW, { color: '#30FF30' });
-      drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_IRIS, { color: '#30FF30' });
-      drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, { color: '#E0E0E0' });
-      drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, { color: '#E0E0E0' });
+      if (isDraw) {
+        drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION,
+          { color: '#C0C0C070', lineWidth: 1 });
+        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, { color: '#FF3030' });
+        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, { color: '#FF3030' });
+        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_IRIS, { color: '#FF3030' });
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, { color: '#30FF30' });
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYEBROW, { color: '#30FF30' });
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_IRIS, { color: '#30FF30' });
+        drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, { color: '#E0E0E0' });
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, { color: '#E0E0E0' });
+      }
     }
 
     // 到此处证明已经检测到人脸，开始判断动作
@@ -105,19 +109,20 @@ $(document).ready(function () {
       // 摇头
       let points = getPoint5(realLandmarks)
       let angle = getPoint5Angle(points)
-      if (angle[2] > 60) {
+      if (angle[2] < -90 || angle[2] > 90) {
         flag = true
       }
     } else if (currentActionType == 3) {
       // 点头
       let points = getPoint5(realLandmarks)
       let angle = getPoint5Angle(points)
-      if (angle[1] > 30) {
+      if (angle[1] < -30 || angle[1] > 30) {
         flag = true
       }
     }
 
     if (flag) {
+      alert("动作完成！")
       // 意味着动作已经完成，重置状态
       currentActionType = -1
       completedActionCount.innerHTML = parseInt(completedActionCount.innerHTML) + 1
