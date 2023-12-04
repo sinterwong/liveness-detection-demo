@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Face vivo detection</title>
+    <script src="/static/js/jquery-2.1.4.min.js"></script>
+    <script src="/static/js/control_utils.js" crossorigin="anonymous"></script>
+    <script src="/static/js/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="/static/js/script.js"></script>
+    <script src="/static/js/face_mesh.js"></script>
+    <link href="/static/css/style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+    <h2 id="instruction">请正对屏幕</h2>
+    <h2 id="actionCount">0</h2>
+
+    <video id="video" width="720px" height="560px" autoplay muted></video>
+    <canvas id="own_canvas" width="720px" height="560px"></canvas>
+    <!-- <canvas id="ref_canvas" width="720px" height="560px", ></canvas> -->
+</body>
+
+</html>

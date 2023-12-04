@@ -1,0 +1,53 @@
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  /* justify-content: center; */
+  /* align-items: center; */
+}
+
+#own_canvas {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+
+#ref_canvas {
+  position: absolute;
+  left: 720px;
+  top: 0px;
+}
+
+
+#video {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  transform: scale(-1, 1);
+  -webkit-transform: scale(-1, 1);
+  filter: FlipH;
+}
+
+#refer_video {
+  position: absolute;
+  left: 720px;
+  top: 0px;
+}
+
+#instruction {
+  position: absolute;
+  left: 0px;
+  top: 600px;
+  color:blue;
+  font-size: xxx-large;
+}
+
+#actionCount {
+  position: absolute;
+  left: 900px;
+  top: 600px;
+  color:rgb(255, 0, 0);
+  font-size: xxx-large;
+}
