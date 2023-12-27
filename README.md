@@ -6,7 +6,7 @@
 
 ## 2. Demo
 
-Git Page: <https://sinterwong.github.io/liveness-detection/>
+Git Page: <https://sinterwong.github.io/liveness-detection-demo/>
 
 ## 3. TODO
 
