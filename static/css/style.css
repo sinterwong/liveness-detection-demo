@@ -1,53 +1,92 @@
+/* General body styles */
 body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  /* justify-content: center; */
-  /* align-items: center; */
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header styles */
+header {
+    background-color: #333;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}
+
+/* Main content styles */
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+/* Video container styles */
+.video-container {
+    position: relative;
+    width: 720px;
+    height: 560px;
+}
+
+#video,
+#own_canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: scaleX(-1);
 }
 
 #own_canvas {
-  position: absolute;
-  left: 0px;
-  top: 0px;
+    z-index: 1;
 }
 
-#ref_canvas {
-  position: absolute;
-  left: 720px;
-  top: 0px;
+/* Info container styles */
+.info-container {
+    display: flex;
+    gap: 4rem;
+    text-align: center;
 }
 
-
-#video {
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  transform: scale(-1, 1);
-  -webkit-transform: scale(-1, 1);
-  filter: FlipH;
+.instruction-container,
+.count-container {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-#refer_video {
-  position: absolute;
-  left: 720px;
-  top: 0px;
+h2 {
+    margin-top: 0;
+    color: #333;
 }
 
 #instruction {
-  position: absolute;
-  left: 0px;
-  top: 600px;
-  color:blue;
-  font-size: xxx-large;
+    font-size: 1.5rem;
+    color: #007bff;
 }
 
 #actionCount {
-  position: absolute;
-  left: 900px;
-  top: 600px;
-  color:rgb(255, 0, 0);
-  font-size: xxx-large;
+    font-size: 1.5rem;
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Footer styles */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 1rem;
 }

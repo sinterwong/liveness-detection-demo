@@ -1,79 +1,161 @@
 $(document).ready(function () {
+    const videoElement = document.getElementById("video");
+    const canvasElement = document.getElementById("own_canvas");
+    const canvasCtx = canvasElement.getContext("2d");
+    const completedActionCount = document.getElementById("actionCount");
+    const actionInstruction = document.getElementById("instruction");
 
-  class Inference {
-    constructor(video, info) {
-      this.defaultInfo = {
-        facingMode: "user",
-        // width: 640,
-        // height: 480
-      };
-      this.video = video;
-      this.elapsed_time = 0;
-      this.time = 0;
-      this.info = Object.assign(Object.assign({}, this.defaultInfo), info);
+    const actionType = {
+        0: "Please blink",
+        1: "Please open your mouth",
+        2: "Please shake your head",
+        3: "Please nod"
+    };
+
+    let currentActionType = -1;
+    let realLandmarks = [];
+
+    // --- Face Mesh Initialization ---
+    const faceMesh = new FaceMesh({
+        locateFile: (file) => `./resource/${file}`
+    });
+
+    faceMesh.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+        useCpuInference: true
+    });
+
+    faceMesh.onResults(onFaceMeshResults);
+
+    // --- Camera and Inference ---
+    class Inference {
+        constructor(video, options) {
+            this.video = video;
+            this.options = { ...options };
+        }
+
+        async start() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" }
+                });
+                this.video.srcObject = stream;
+                this.video.onloadedmetadata = () => {
+                    this.video.play();
+                    this.captureStatus();
+                };
+            } catch (err) {
+                console.error("Failed to acquire camera feed: ", err);
+                alert("Failed to acquire camera feed: " + err);
+                throw err;
+            }
+        }
+
+        captureStatus() {
+            window.requestAnimationFrame(() => this.forward());
+        }
+
+        async forward() {
+            if (this.video.paused || this.video.ended) return;
+            await this.options.faceMeshInfer();
+            this.captureStatus();
+        }
+
+        stop() {
+            this.video.pause();
+            if (this.video.srcObject) {
+                this.video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        }
     }
 
-    run(stream) {
-      this.video.srcObject = stream;
-      this.video.onloadedmetadata = () => {
-        this.video.play();
-        this.captureStatus()
-      }
+    const inference = new Inference(videoElement, {
+        faceMeshInfer: async () => {
+            await faceMesh.send({ image: videoElement });
+        }
+    });
+
+    inference.start();
+
+    // --- Liveness Detection Logic ---
+    function onFaceMeshResults(results) {
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        realLandmarks = [];
+
+        if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
+            const landmarks = results.multiFaceLandmarks[0];
+            processLandmarks(landmarks);
+            drawLandmarks(landmarks);
+            checkLiveness();
+        }
     }
 
-    captureStatus() {
-      this.time++;  // 帧数记录
-      window.requestAnimationFrame(() => {
-        this.forward()
-      })
+    function processLandmarks(landmarks) {
+        for (const point of landmarks) {
+            realLandmarks.push([
+                point.x * 100,
+                point.y * 100 * (canvasElement.height / canvasElement.width)
+            ]);
+        }
     }
 
-    forward() {
-      // 人体关键点检测
-      var faceMeshInfer = null;
-      this.video.paused || this.video.currentTime === this.elapsed_time || (this.elapsed_time = this.video.currentTime, faceMeshInfer = this.info.faceMeshInfer());
-      faceMeshInfer ? faceMeshInfer.then(() => {
-        this.captureStatus()
-      }) : this.captureStatus()
+    const completedActions = new Set();
+
+    function checkLiveness() {
+        if (completedActions.size === 4) {
+            actionInstruction.innerHTML = "All actions completed! Thank you.";
+            actionInstruction.style.color = "green";
+            inference.stop();
+            return;
+        }
+
+        if (currentActionType === -1) {
+            let nextAction;
+            do {
+                nextAction = Math.floor(Math.random() * 4);
+            } while (completedActions.has(nextAction));
+            currentActionType = nextAction;
+            actionInstruction.innerHTML = actionType[currentActionType];
+        }
+
+        let actionCompleted = false;
+        switch (currentActionType) {
+            case 0: // Blink
+                if (eyeAspectRatio(realLandmarks) < 0.2) actionCompleted = true;
+                break;
+            case 1: // Open mouth
+                if (mouthAspectRatio(realLandmarks) > 0.6) actionCompleted = true;
+                break;
+            case 2: // Shake head
+                const [, , yaw] = getHeadPoseAngles(realLandmarks);
+                if (Math.abs(yaw) > 30) actionCompleted = true;
+                break;
+            case 3: // Nod
+                const [, pitch] = getHeadPoseAngles(realLandmarks);
+                if (Math.abs(pitch) > 30) actionCompleted = true;
+                break;
+        }
+
+        if (actionCompleted) {
+            alert("Action completed!");
+            completedActions.add(currentActionType);
+            completedActionCount.innerHTML = completedActions.size;
+            currentActionType = -1;
+            actionInstruction.innerHTML = "Please wait...";
+            setTimeout(() => {
+                if (currentActionType === -1 && completedActions.size < 4) {
+                    actionInstruction.innerHTML = "Please look at the screen";
+                }
+            }, 2000);
+        }
     }
 
-    async start() {
-      navigator.mediaDevices && navigator.mediaDevices.getUserMedia || alert("No navigator.mediaDevices.getUserMedia exists.");
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: this.info.facingMode,
-            width: this.info.width,
-            height: this.info.height
-          }
-        });
-        this.run(stream);
-      } catch (c) {
-        console.error("Failed to acquire camera feed: " + c);
-        alert("Failed to acquire camera feed: " + c);
-        throw c;
-      }
-    }
-  }
-
-  function faceMeshResults(results, isDraw = true) {
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    realLandmarks = []
-    if (results.multiFaceLandmarks) {
-      landmarks = results.multiFaceLandmarks[0]
-      if (!landmarks) {
-        return
-      }
-      for (point of landmarks) {
-        point.x = 1 - point.x  // 水平翻转
-        // realLandmarks.push([point.x * canvasElement.width, point.y * canvasElement.height])
-        // 以100为基数而不论画布大小，阈值都不用改变
-        realLandmarks.push([point.x * 100, point.y * 100 * (canvasElement.height / canvasElement.width)])
-      }
-
-      if (isDraw) {
-        drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION,
-          { color: '#C0C0C070', lineWidth: 1 });
+    // --- Drawing ---
+    function drawLandmarks(landmarks) {
+        drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION, { color: '#C0C0C070', lineWidth: 1 });
         drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, { color: '#FF3030' });
         drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, { color: '#FF3030' });
         drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_IRIS, { color: '#FF3030' });
@@ -82,188 +164,59 @@ $(document).ready(function () {
         drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_IRIS, { color: '#30FF30' });
         drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, { color: '#E0E0E0' });
         drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, { color: '#E0E0E0' });
-      }
     }
 
-    // 到此处证明已经检测到人脸，开始判断动作
-    if (currentActionType == -1) {
-      // 随机选择一个动作
-      currentActionType = Math.floor(Math.random() * 4)
-      actionInstruction.innerHTML = actionType[currentActionType]
+    // --- Utility Functions ---
+    function get2PointsNorm(p1, p2) {
+        return Math.sqrt(p1.reduce((sum, val, i) => sum + (val - p2[i]) ** 2, 0));
     }
 
-    let flag = false
-
-    // 根据不同的动作类型，判断是否完成
-    if (currentActionType == 0) {
-      // 眨眼
-      if (eyeAspectRation(realLandmarks) < 0.2) {
-        flag = true
-      }
-    } else if (currentActionType == 1) {
-      // 张嘴
-      if (mouthAspectRatio(realLandmarks) > 0.6) {
-        flag = true
-      }
-    } else if (currentActionType == 2) {
-      // 摇头
-      let points = getPoint5(realLandmarks)
-      let angle = getPoint5Angle(points)
-      if ((angle[2] < -90 || angle[2] > 90) && (angle[1] > -30 && angle[1] < 30)) {
-        flag = true
-      }
-    } else if (currentActionType == 3) {
-      // 点头
-      let points = getPoint5(realLandmarks)
-      let angle = getPoint5Angle(points)
-      if ((angle[1] < -30 || angle[1] > 30) && (angle[2] > -30 && angle[2] < 30)) {
-        flag = true
-      }
+    function get4PointsAspectRatio(points) {
+        const v1 = get2PointsNorm(points[0], points[4]);
+        const h1 = get2PointsNorm(points[1], points[5]);
+        const h2 = get2PointsNorm(points[2], points[6]);
+        const h3 = get2PointsNorm(points[3], points[7]);
+        return (h1 + h2 + h3) / (3 * v1);
     }
 
-    if (flag) {
-      alert("动作完成！")
-      // 意味着动作已经完成，重置状态
-      currentActionType = -1
-      completedActionCount.innerHTML = parseInt(completedActionCount.innerHTML) + 1
-      actionInstruction.innerHTML = "请稍等..."
-      setTimeout(() => {
-        actionInstruction.innerHTML = actionType[currentActionType]
-      }, 2000)
+    function eyeAspectRatio(landmarks) {
+        const leftEyePoints = [landmarks[263], landmarks[385], landmarks[386], landmarks[387], landmarks[362], landmarks[380], landmarks[374], landmarks[373]];
+        const leftEAR = get4PointsAspectRatio(leftEyePoints);
+
+        const rightEyePoints = [landmarks[33], landmarks[160], landmarks[159], landmarks[158], landmarks[133], landmarks[144], landmarks[145], landmarks[153]];
+        const rightEAR = get4PointsAspectRatio(rightEyePoints);
+
+        return (leftEAR + rightEAR) / 2;
     }
 
-    // $.post("/faceMesh", {
-    //     pose_landmarks: JSON.stringify(results.multiFaceLandmarks),
-    //     width: canvasElement.width,
-    //     height: canvasElement.height
-    // }, function (err, req, resp) {
-    //     console.log(resp);
-    // });
-  }
-
-  function get2PointsNorm(p1, p2) {
-    let sum = 0
-    for (let index = 0; index < p1.length; index++) {
-      sum += Math.pow(p1[index] - p2[index], 2)
-    }
-    return Math.sqrt(sum)
-  }
-
-  function get4PointsAspectRatio(points) {
-    let v1 = get2PointsNorm(points[0], points[4])
-    let h1 = get2PointsNorm(points[1], points[5])
-    let h2 = get2PointsNorm(points[2], points[6])
-    let h3 = get2PointsNorm(points[3], points[7])
-    return (h1 + h2 + h3) / (3 * v1)
-  }
-
-  function eyeAspectRation(landmarks) {
-
-    let leftEyePoints = [landmarks[263], landmarks[385], landmarks[386], landmarks[387], landmarks[362], landmarks[380], landmarks[374], landmarks[373]]
-    let leftEyeAspectRatio = get4PointsAspectRatio(leftEyePoints)
-
-    let rightEyePoints = [landmarks[33], landmarks[160], landmarks[159], landmarks[158], landmarks[133], landmarks[144], landmarks[145], landmarks[153]]
-    let rightEyeAspectRatio = get4PointsAspectRatio(rightEyePoints)
-    return (leftEyeAspectRatio + rightEyeAspectRatio) / 2
-  }
-
-  function mouthAspectRatio(landmarks) {
-    let mouthPoints = [landmarks[61], landmarks[81], landmarks[13], landmarks[311], landmarks[291], landmarks[178], landmarks[14], landmarks[402]]
-    return get4PointsAspectRatio(mouthPoints)
-  }
-
-  function getPoint5(landmarks) {
-    let point5 = []
-    point5.push(landmarks[468])
-    point5.push(landmarks[473])
-    point5.push(landmarks[4])
-    point5.push(landmarks[61])
-    point5.push(landmarks[291])
-    return point5
-  }
-
-  function getPoint5Angle(points) {
-    let LMx = []
-    let LMy = []
-    for (let index = 0; index < points.length; index++) {
-      LMx.push(points[index][0])
-      LMy.push(points[index][1])
+    function mouthAspectRatio(landmarks) {
+        const mouthPoints = [landmarks[61], landmarks[81], landmarks[13], landmarks[311], landmarks[291], landmarks[178], landmarks[14], landmarks[402]];
+        return get4PointsAspectRatio(mouthPoints);
     }
 
-    let dPx_eyes = Math.max((LMx[1] - LMx[0]), 1.0)
-    let dPy_eyes = LMy[1] - LMy[0]
-    let angle = Math.atan(dPy_eyes / dPx_eyes)
+    function getHeadPoseAngles(landmarks) {
+        const point5 = [landmarks[468], landmarks[473], landmarks[4], landmarks[61], landmarks[291]];
+        const lmX = point5.map(p => p[0]);
+        const lmY = point5.map(p => p[1]);
 
-    let alpha = Math.cos(angle)
-    let beta = Math.sin(angle)
+        const dPxEyes = Math.max(lmX[1] - lmX[0], 1.0);
+        const dPyEyes = lmY[1] - lmY[0];
+        const angle = Math.atan(dPyEyes / dPxEyes);
+        const alpha = Math.cos(angle);
+        const beta = Math.sin(angle);
 
-    // Rotate the point
-    let LMRx = []
-    let LMRy = []
-    for (let index = 0; index < points.length; index++) {
-      LMRx.push(alpha * LMx[index] + beta * LMy[index] + (1 - alpha) * LMx[2] / 2 - beta * LMy[2] / 2)
-      LMRy.push(-beta * LMx[index] + alpha * LMy[index] + beta * LMx[2] / 2 + (1 - alpha) * LMy[2] / 2)
+        const lmRx = lmX.map((x, i) => alpha * x + beta * lmY[i] + (1 - alpha) * lmX[2] / 2 - beta * lmY[2] / 2);
+        const lmRy = lmY.map((y, i) => -beta * lmX[i] + alpha * y + beta * lmX[2] / 2 + (1 - alpha) * lmY[2] / 2);
+
+        const dXtot = (lmRx[1] - lmRx[0] + lmRx[4] - lmRx[3]) / 2;
+        const dYtot = (lmRy[3] - lmRy[0] + lmRy[4] - lmRy[1]) / 2;
+        const dXnose = (lmRx[1] - lmRx[2] + lmRx[4] - lmRx[2]) / 2;
+        const dYnose = (lmRy[3] - lmRy[2] + lmRy[4] - lmRy[2]) / 2;
+
+        const yaw = dXtot !== 0 ? (-90 + 90 / 0.5 * dXnose / dXtot) : 0;
+        const pitch = dYtot !== 0 ? (-90 + 90 / 0.5 * dYnose / dYtot) : 0;
+        const roll = angle * 180 / Math.PI;
+
+        return [roll, pitch, yaw];
     }
-
-    // Average distance between eyes and mouth
-    let dXtot = (LMRx[1] - LMRx[0] + LMRx[4] - LMRx[3]) / 2
-    let dYtot = (LMRy[3] - LMRy[0] + LMRy[4] - LMRy[1]) / 2
-
-    // Average distance between nose and eyes
-    let dXnose = (LMRx[1] - LMRx[2] + LMRx[4] - LMRx[2]) / 2
-    let dYnose = (LMRy[3] - LMRy[2] + LMRy[4] - LMRy[2]) / 2
-
-    // Relative rotaion of the face
-    let Xfrontal = dXtot != 0 ? (-90 + 90 / 0.5 * dXnose / dXtot) : 0
-    let Yfrontal = dYtot != 0 ? (-90 + 90 / 0.5 * dYnose / dYtot) : 0
-
-    let roll = angle * 180 / Math.PI
-    let pitch = Yfrontal
-    let yaw = Xfrontal
-
-    return [roll, pitch, yaw]
-  }
-
-  const videoElement = document.getElementById("video")
-  const canvasElement = document.getElementById("own_canvas")
-  const canvasCtx = canvasElement.getContext("2d")
-
-  const completedActionCount = document.getElementById("actionCount")
-  const actionInstruction = document.getElementById("instruction")
-
-  // 定义动作类型
-  const actionType = {
-    0: "请眨眼",
-    1: "请张嘴",
-    2: "请摇头",
-    3: "请点头"
-  }
-
-  currentActionType = -1;
-
-  // 人脸网格
-  const faceMesh = new FaceMesh({
-    locateFile: (file) => {
-      return `./resource/${file}`;
-    }
-  });
-
-  faceMesh.setOptions({
-    maxNumFaces: 1,
-    refineLandmarks: true,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5,
-    useCpuInference: true
-  });
-
-  faceMesh.onResults(faceMeshResults);
-
-  const inference = new Inference(videoElement, {
-    faceMeshInfer: async () => {
-      await faceMesh.send({ image: videoElement });
-    },
-    // width: 720,
-    // height: 560
-  });
-  inference.start();
 });
