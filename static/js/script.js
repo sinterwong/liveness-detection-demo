@@ -44,6 +44,15 @@ $(document).ready(function () {
                 });
                 this.video.srcObject = stream;
                 this.video.onloadedmetadata = () => {
+                    this.video.width = this.video.videoWidth;
+                    this.video.height = this.video.videoHeight;
+                    canvasElement.width = this.video.width;
+                    canvasElement.height = this.video.height;
+
+                    const videoContainer = document.querySelector('.video-container');
+                    const aspectRatio = this.video.videoHeight / this.video.videoWidth;
+                    videoContainer.style.height = `${videoContainer.offsetWidth * aspectRatio}px`;
+
                     this.video.play();
                     this.captureStatus();
                 };
@@ -95,10 +104,7 @@ $(document).ready(function () {
 
     function processLandmarks(landmarks) {
         for (const point of landmarks) {
-            realLandmarks.push([
-                point.x * 100,
-                point.y * 100 * (canvasElement.height / canvasElement.width)
-            ]);
+            realLandmarks.push([point.x, point.y]);
         }
     }
 
