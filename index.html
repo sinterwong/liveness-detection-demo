@@ -1,48 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Face Liveness Detection</title>
-    <link href="./static/css/style.css" rel="stylesheet" type="text/css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="基于 MediaPipe Face Mesh 的纯前端人脸活体检测 demo" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Face Liveness Detection</title>
+  <link rel="stylesheet" href="./src/css/style.css" />
 </head>
 
 <body>
-    <header>
-        <h1>Face Liveness Detection</h1>
-    </header>
+  <header class="app-header">
+    <h1>Face Liveness Detection</h1>
+  </header>
 
-    <main>
-        <div class="container">
-            <div class="video-container">
-                <video id="video" autoplay muted></video>
-                <canvas id="own_canvas"></canvas>
-            </div>
-            <div class="info-container">
-                <div class="instruction-container">
-                    <h2>Instruction:</h2>
-                    <p id="instruction">Please look at the screen</p>
-                </div>
-                <div class="count-container">
-                    <h2>Action Count:</h2>
-                    <p id="actionCount">0</p>
-                </div>
-            </div>
+  <main class="app-main">
+    <div class="liveness">
+      <div class="video-stage" id="videoStage" aria-label="摄像头预览">
+        <video id="video" class="video-stage__video" autoplay muted playsinline></video>
+        <canvas id="overlay" class="video-stage__overlay" aria-hidden="true"></canvas>
+        <div class="video-stage__placeholder" id="placeholder" role="status">
+          <p id="placeholderText">正在启动摄像头…</p>
         </div>
-    </main>
+      </div>
 
-    <footer>
-        <p>Powered by MediaPipe</p>
-    </footer>
+      <section class="status" aria-label="活体检测状态">
+        <div class="status__instruction">
+          <span class="status__label">当前动作</span>
+          <p class="status__text" id="instruction" aria-live="polite">请将脸部对准画面</p>
+        </div>
+        <div class="status__progress" aria-label="动作完成进度">
+          <span class="status__label">进度</span>
+          <p class="status__count" aria-live="polite">
+            <span id="actionCount">0</span>
+            <span class="status__count-sep">/</span>
+            <span id="actionTotal">0</span>
+          </p>
+        </div>
+      </section>
 
-    <script src="./static/js/jquery-2.1.4.min.js"></script>
-    <script src="./static/js/control_utils.js" crossorigin="anonymous"></script>
-    <script src="./static/js/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="./resource/face_mesh_solution_packed_assets_loader.js"></script>
-    <script src="./static/js/face_mesh.js"></script>
-    <script src="./static/js/script.js"></script>
+      <ol class="action-list" id="actionList" aria-label="需要完成的动作"></ol>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>Powered by MediaPipe Face Mesh</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Vendor (provides window.FaceMesh, drawConnectors, FACEMESH_*). -->
+  <script src="./static/js/control_utils.js" crossorigin="anonymous"></script>
+  <script src="./static/js/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="./resource/face_mesh_solution_packed_assets_loader.js"></script>
+  <script src="./static/js/face_mesh.js"></script>
+
+  <!-- App -->
+  <script type="module" src="./src/js/main.js"></script>
 </body>
 
 </html>

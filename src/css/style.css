@@ -1,0 +1,366 @@
+/* =========================================================================
+   Liveness Detection Demo — styles
+   Mobile-first, single design-token system in :root.
+   ========================================================================= */
+
+:root {
+  --color-bg: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f9fafb;
+  --color-border: #e5e7eb;
+  --color-text: #111827;
+  --color-muted: #6b7280;
+
+  --color-primary: #2563eb;
+  --color-primary-soft: #dbeafe;
+  --color-success: #059669;
+  --color-success-soft: #d1fae5;
+  --color-warn: #d97706;
+  --color-danger: #dc2626;
+  --color-warn-soft: #fef3c7;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 6px 16px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 20px 30px -10px rgba(15, 23, 42, 0.15);
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --video-max-width: 720px;
+  --transition-fast: 150ms ease;
+  --transition-slow: 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ----- Reset / base ------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ----- Layout shell ------------------------------------------------------- */
+
+.app-header {
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  color: #fff;
+  padding: var(--space-5) var(--space-6);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.app-header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.app-footer {
+  background: #111827;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  padding: var(--space-4) var(--space-6);
+  font-size: 0.875rem;
+}
+
+/* ----- Liveness card ----------------------------------------------------- */
+
+.liveness {
+  width: 100%;
+  max-width: 760px;
+  display: grid;
+  gap: var(--space-6);
+}
+
+/* ----- Video stage -------------------------------------------------------- */
+
+.video-stage {
+  position: relative;
+  width: 100%;
+  max-width: var(--video-max-width);
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.video-stage__video,
+.video-stage__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1); /* mirror the selfie view */
+  object-fit: cover;
+}
+
+.video-stage__overlay {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.video-stage__placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 39, 0.65);
+  color: #f9fafb;
+  font-size: 1rem;
+  text-align: center;
+  padding: var(--space-4);
+  transition: opacity var(--transition-slow);
+}
+
+.video-stage__placeholder.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ----- Status row (instruction + progress) -------------------------------- */
+
+.status {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.status__instruction,
+.status__progress {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.status__instruction {
+  border-left: 4px solid var(--color-primary);
+}
+
+.status__progress {
+  text-align: center;
+  min-width: 8rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.status__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+
+.status__text {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  min-height: 1.5em;
+}
+
+.status__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-weight: 700;
+  color: var(--color-warn);
+}
+
+.status__count #actionCount {
+  font-size: 1.875rem;
+  line-height: 1;
+}
+
+.status__count-sep {
+  color: var(--color-muted);
+  font-size: 1.25rem;
+}
+
+.status__count #actionTotal {
+  color: var(--color-muted);
+  font-size: 1.25rem;
+}
+
+/* ----- Action list -------------------------------------------------------- */
+
+.action-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.action-item__check {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: transparent;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.action-item__label {
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.action-item.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.action-item.is-active .action-item__label {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.action-item.is-done {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+}
+
+.action-item.is-done .action-item__check {
+  background: var(--color-success);
+  color: #fff;
+}
+
+.action-item.is-done .action-item__label {
+  color: var(--color-success);
+  text-decoration: line-through;
+  text-decoration-color: rgba(5, 150, 105, 0.4);
+}
+
+/* ----- Toast -------------------------------------------------------------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-8);
+  transform: translate(-50%, 1.5rem);
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  padding: var(--space-3) var(--space-5);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+  z-index: 10;
+  max-width: calc(100vw - 2 * var(--space-4));
+  text-align: center;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ----- Responsive --------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .app-main {
+    padding: var(--space-4);
+  }
+
+  .status {
+    grid-template-columns: 1fr;
+  }
+
+  .status__progress {
+    flex-direction: row;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .status__text {
+    font-size: 1.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
